@@ -8,23 +8,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:markektplace/admin.dart' as admin;
 import 'package:markektplace/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('app opens the customer storefront', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Beranda'), findsOneWidget);
+    expect(find.text('Menu & Produk Favorit'), findsOneWidget);
+    expect(
+      find.text('Silakan masuk menggunakan akun member Anda'),
+      findsNothing,
+    );
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('customer and admin can switch between pages', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text('Akun'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-admin-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ringkasan Toko'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('switch-to-store-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Menu & Produk Favorit'), findsOneWidget);
+  });
+
+  testWidgets('admin can edit and delete a product', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: admin.AdminDashboardPage()),
+    );
+
+    await tester.tap(find.text('Produk'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Kopi Susu Baru');
+    await tester.tap(find.text('Simpan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kopi Susu Baru'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hapus').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kopi Susu Baru'), findsNothing);
   });
 }
