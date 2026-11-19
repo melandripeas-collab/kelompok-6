@@ -16,13 +16,13 @@ if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($pass) 
 
 $db = (new Database())->connect();
 
-$cek = $db->prepare('SELECT id FROM users WHERE email = :email');
+$cek = $db->prepare('SELECT id_user FROM `user` WHERE email = :email');
 $cek->execute([':email' => $email]);
 if ($cek->fetch()) {
     jsonResponse(false, 'Email sudah terdaftar', null, 409);
 }
 
-$stmt = $db->prepare('INSERT INTO users (name, email, password) VALUES (:n, :e, :p)');
+$stmt = $db->prepare('INSERT INTO `user` (nama, email, password) VALUES (:n, :e, :p)');
 $stmt->execute([
     ':n' => $name,
     ':e' => $email,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'admin.dart' as admin;
+import 'register.dart';
 import 'services/api_service.dart';
 import 'services/session.dart';
 
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Login FamilyMart',
+      title: 'Login Admin FamilyMart',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -91,12 +92,27 @@ class _LoginPageState extends State<LoginPage> {
 
     await Session.saveToken(data['token'] as String);
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => const admin.AdminDashboardPage(),
-      ),
-      (route) => false,
+    Navigator.of(context).pushReplacement<void, bool>(
+      MaterialPageRoute<void>(builder: (_) => const admin.AdminDashboardPage()),
+      result: true,
     );
+  }
+
+  Future<void> _openRegister() async {
+    final credentials = await Navigator.of(context).push<Map<String, String>>(
+      MaterialPageRoute<Map<String, String>>(
+        builder: (_) => const RegisterPage(),
+      ),
+    );
+    if (!mounted || credentials == null) return;
+
+    final email = credentials['email'];
+    final password = credentials['password'];
+    if (email == null || password == null) return;
+
+    _emailController.text = email;
+    _passwordController.text = password;
+    await _handleLogin();
   }
 
   @override
@@ -156,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Silakan masuk menggunakan akun member Anda',
+                    'Silakan masuk untuk membuka dashboard admin',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xFF6B7774), fontSize: 13),
                   ),
@@ -227,9 +243,6 @@ class _LoginPageState extends State<LoginPage> {
                       if (value == null || value.isEmpty) {
                         return 'Password tidak boleh kosong';
                       }
-                      if (value.length < 6) {
-                        return 'Password minimal 6 karakter';
-                      }
                       return null;
                     },
                   ),
@@ -299,9 +312,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          // Aksi pindah ke halaman register
-                        },
+                        onTap: _openRegister,
                         child: const Text(
                           'Daftar sekarang',
                           style: TextStyle(

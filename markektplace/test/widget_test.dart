@@ -17,28 +17,26 @@ void main() {
 
     expect(find.text('Beranda'), findsOneWidget);
     expect(find.text('Menu & Produk Favorit'), findsOneWidget);
+    expect(find.byKey(const Key('admin-login-entry-button')), findsOneWidget);
     expect(
-      find.text('Silakan masuk menggunakan akun member Anda'),
+      find.text('Silakan masuk untuk membuka dashboard admin'),
       findsNothing,
     );
   });
 
-  testWidgets('customer and admin can switch between pages', (
+  testWidgets('admin login opens from the storefront', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const MyApp());
 
-    await tester.tap(find.text('Akun'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open-admin-button')));
+    await tester.tap(find.byKey(const Key('admin-login-entry-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ringkasan Toko'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('switch-to-store-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Menu & Produk Favorit'), findsOneWidget);
+    expect(
+      find.text('Silakan masuk untuk membuka dashboard admin'),
+      findsOneWidget,
+    );
+    expect(find.text('Ringkasan Toko'), findsNothing);
   });
 
   testWidgets('admin can edit and delete a product', (

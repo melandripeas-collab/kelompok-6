@@ -275,7 +275,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
         backgroundColor: Colors.white,
-        indicatorColor: fmGreen.withOpacity(0.15),
+        indicatorColor: fmGreen.withValues(alpha: 0.15),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
@@ -478,7 +478,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: fmGreen.withOpacity(0.1),
+                                      color: fmGreen.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Icon(

@@ -2,6 +2,20 @@
 
 A new Flutter project.
 
+## Run the local API (Windows)
+
+Start MySQL, then run this from the repository root in PowerShell and keep the
+terminal open:
+
+```powershell
+C:\AppServ\php7\php.exe -S 127.0.0.1:8000 -t ..
+```
+
+Check that `http://127.0.0.1:8000/kelompok-6/backend/api/ping.php` returns
+`"success": true`, then launch the app. Android emulator builds connect through
+`10.0.2.2:8000`; web and desktop builds use `127.0.0.1:8000`. Ensure the local
+MySQL database credentials in `backend/config/database.php` are correct.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

@@ -1,7 +1,7 @@
 <?php
 /**
  * Membaca token Bearer dari header Authorization,
- * lalu mencocokkan ke tabel users (kolom api_token).
+ * lalu mencocokkan ke tabel user (kolom api_token).
  */
 function getBearerToken(): ?string
 {
@@ -22,7 +22,10 @@ function requireAuth(PDO $db): array
         jsonResponse(false, 'Token tidak ditemukan', null, 401);
     }
 
-    $stmt = $db->prepare('SELECT id, name, email FROM users WHERE api_token = :token LIMIT 1');
+    $stmt = $db->prepare(
+        'SELECT id_user AS id, nama AS name, email
+         FROM `user` WHERE api_token = :token LIMIT 1'
+    );
     $stmt->execute([':token' => $token]);
     $user = $stmt->fetch();
 

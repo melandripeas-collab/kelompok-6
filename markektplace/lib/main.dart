@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'admin.dart' as admin;
 import 'login.dart' as login;
 
 void main() => runApp(const MyApp());
@@ -193,6 +192,14 @@ class StorePageState extends State<StorePage> {
     });
   }
 
+  Future<void> _openAdminLogin() async {
+    final loggedIn = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => const login.LoginPage()),
+    );
+    if (!mounted || loggedIn != true) return;
+    setState(() => _selectedTab = 0);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -211,7 +218,7 @@ class StorePageState extends State<StorePage> {
         selectedIndex: _selectedTab,
         onDestinationSelected: (index) => setState(() => _selectedTab = index),
         backgroundColor: Colors.white,
-        indicatorColor: fmGreen.withOpacity(0.15),
+        indicatorColor: fmGreen.withValues(alpha: 0.15),
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.storefront_outlined),
@@ -359,6 +366,17 @@ class StorePageState extends State<StorePage> {
         ),
       ),
       IconButton(
+        key: const Key('admin-login-entry-button'),
+        tooltip: 'Masuk Admin',
+        onPressed: _openAdminLogin,
+        icon: const Icon(Icons.admin_panel_settings_outlined),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: fmGreen,
+          fixedSize: const Size(46, 46),
+        ),
+      ),
+      IconButton(
         tooltip: 'Keranjang',
         onPressed: () => setState(() => _selectedTab = 2),
         icon: _cartIcon(),
@@ -442,8 +460,8 @@ class StorePageState extends State<StorePage> {
                   height: 58,
                   decoration: BoxDecoration(
                     color: index % 2 == 0
-                        ? fmGreen.withOpacity(0.12)
-                        : fmBlue.withOpacity(0.12),
+                        ? fmGreen.withValues(alpha: 0.12)
+                        : fmBlue.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Icon(
@@ -952,7 +970,7 @@ class StorePageState extends State<StorePage> {
             width: 92,
             height: 92,
             decoration: BoxDecoration(
-              color: fmGreen.withOpacity(0.12),
+              color: fmGreen.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -1042,34 +1060,10 @@ class StorePageState extends State<StorePage> {
       _accountTile(Icons.help_outline_rounded, 'Bantuan & layanan pelanggan'),
       const SizedBox(height: 18),
       FilledButton.icon(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const login.LoginPage(),
-            ),
-          );
-        },
-        icon: const Icon(Icons.login_rounded),
-        label: const Text('Masuk Akun'),
-        style: FilledButton.styleFrom(
-          backgroundColor: fmBlue,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-      const SizedBox(height: 12),
-      FilledButton.icon(
-        key: const Key('open-admin-button'),
-        onPressed: () {
-          setState(() => _selectedTab = 0);
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const admin.AdminDashboardPage(),
-            ),
-          );
-        },
+        key: const Key('admin-login-button'),
+        onPressed: _openAdminLogin,
         icon: const Icon(Icons.admin_panel_settings_outlined),
-        label: const Text('Buka Halaman Admin'),
+        label: const Text('Masuk Admin'),
         style: FilledButton.styleFrom(
           backgroundColor: fmGreen,
           foregroundColor: Colors.white,
@@ -1085,7 +1079,7 @@ class StorePageState extends State<StorePage> {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: fmBlue.withOpacity(0.1),
+        color: fmBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, color: fmBlue, size: 20),
