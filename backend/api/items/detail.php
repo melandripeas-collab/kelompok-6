@@ -15,15 +15,17 @@ $db = (new Database())->connect();
 $user = requireAuth($db);
 
 $stmt = $db->prepare(
-    'SELECT i.*, c.name AS category_name
-     FROM items i
-     JOIN categories c ON c.id = i.category_id
-     WHERE i.id = :id AND i.user_id = :user_id
+    'SELECT p.id_produk AS id, p.nama_produk AS title,
+            NULL AS description, p.harga AS price,
+            p.id_kategori AS category_id, k.nama_kategori AS category_name,
+            p.created_at
+     FROM produk p
+     JOIN kategori k ON k.id_kategori = p.id_kategori
+     WHERE p.id_produk = :id
      LIMIT 1'
 );
 $stmt->execute([
     ':id' => $id,
-    ':user_id' => $user['id'],
 ]);
 
 $item = $stmt->fetch();

@@ -1,31 +1,43 @@
-# markektplace
+# Marketplace
 
-A new Flutter project.
+## Jalankan website lokal (Windows/Laragon)
 
-## Run the local API (Windows)
+1. Nyalakan MySQL di Laragon. Pastikan database `db_marketplace` tersedia.
+2. Salin `backend/.env.example` menjadi `backend/.env`, lalu isi kredensial MySQL.
+3. Dari root repository, buka terminal pertama dan jalankan API memakai PHP
+   Laragon:
 
-Start MySQL, then run this from the repository root in PowerShell and keep the
-terminal open:
+   ```powershell
+   $Php = 'C:\laragon\bin\php\php-8.3.36-Win32-vs16-x64\php.exe'
+   & $Php -S 127.0.0.1:8000 -t C:\laragon\www
+   ```
+
+4. Di terminal kedua, build dan sajikan website:
+
+   ```powershell
+   Set-Location C:\laragon\www\kelompok-6\markektplace
+   $Php = 'C:\laragon\bin\php\php-8.3.36-Win32-vs16-x64\php.exe'
+   flutter pub get
+   flutter build web --dart-define=API_BASE_URL=http://127.0.0.1:8000/kelompok-6/backend/api
+   & $Php -S 127.0.0.1:8080 -t build\web
+   ```
+
+5. Buka `http://127.0.0.1:8080`. API health check:
+   `http://127.0.0.1:8000/kelompok-6/backend/api/ping.php`.
+
+Untuk konfigurasi database pertama kali, impor struktur dari
+`db_marketplace (1).sql`, lalu jalankan
+`backend/database/002_sync_marketplace_data.sql`. Akun yang didaftarkan dari
+halaman login disimpan ke tabel `user`; produk, kategori, dan transaksi
+disimpan ke tabel masing-masing. Pengelolaan produk/kategori memerlukan login.
+
+### Alamat API kustom
+
+Pada perangkat atau host lain, berikan alamat API saat menjalankan Flutter:
 
 ```powershell
-C:\AppServ\php7\php.exe -S 127.0.0.1:8000 -t ..
+flutter build web --dart-define=API_BASE_URL=http://192.168.1.10:8000/kelompok-6/backend/api
 ```
 
-Check that `http://127.0.0.1:8000/kelompok-6/backend/api/ping.php` returns
-`"success": true`, then launch the app. Android emulator builds connect through
-`10.0.2.2:8000`; web and desktop builds use `127.0.0.1:8000`. Ensure the local
-MySQL database credentials in `backend/config/database.php` are correct.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Sebagai alternatif, atur `API_HOST`, `API_PORT`, `API_PROTOCOL`, dan
+`API_BASE_PATH` secara terpisah.

@@ -7,29 +7,33 @@ setHeaders();
 requireMethod('GET');
 
 $db = (new Database())->connect();
-$user = requireAuth($db);
 
 $search = trim($_GET['search'] ?? '');
 $categoryId = (int)($_GET['category_id'] ?? 0);
 
-$sql = 'SELECT i.id, i.title, i.description, i.price, i.category_id,
-               c.name AS category_name, i.created_at
-        FROM items i
-        JOIN categories c ON c.id = i.category_id
-        WHERE i.user_id = :user_id';
-$params = [':user_id' => $user['id']];
+$sql = 'SELECT p.id_produk AS id, p.nama_produk AS title,
+               NULL AS description, p.harga AS price,
+               p.id_kategori AS category_id, k.nama_kategori AS category_name,
+               p.created_at
+        FROM produk p
+        JOIN kategori k ON k.id_kategori = p.id_kategori';
+$params = [];
+$where = [];
 
 if ($search !== '') {
-    $sql .= ' AND i.title LIKE :search';
+    $where[] = 'p.nama_produk LIKE :search';
     $params[':search'] = "%{$search}%";
 }
 
 if ($categoryId > 0) {
-    $sql .= ' AND i.category_id = :category_id';
+    $where[] = 'p.id_kategori = :category_id';
     $params[':category_id'] = $categoryId;
 }
 
-$sql .= ' ORDER BY i.id DESC';
+if ($where) {
+    $sql .= ' WHERE ' . implode(' AND ', $where);
+}
+$sql .= ' ORDER BY p.id_produk DESC';
 
 $stmt = $db->prepare($sql);
 $stmt->execute($params);

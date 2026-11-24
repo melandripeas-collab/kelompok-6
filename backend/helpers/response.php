@@ -34,5 +34,8 @@ function getJsonInput(): array
 {
     $raw  = file_get_contents('php://input');
     $data = json_decode($raw, true);
-    return is_array($data) ? $data : [];
+    if (is_array($data)) {
+        return $data;
+    }
+    return is_array($_POST) ? $_POST : [];
 }

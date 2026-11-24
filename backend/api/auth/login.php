@@ -6,13 +6,17 @@ setHeaders();
 requireMethod('POST');
 
 $in = getJsonInput();
-$email = trim($in['email'] ?? '');
+$email = strtolower(trim((string)($in['email'] ?? '')));
 $pass  = $in['password'] ?? '';
+
+if ($email === '' || $pass === '') {
+    jsonResponse(false, 'Email dan password wajib diisi', null, 400);
+}
 
 $db = (new Database())->connect();
 $stmt = $db->prepare(
     'SELECT id_user AS id, nama AS name, email, password
-     FROM `user` WHERE email = :email LIMIT 1'
+     FROM `user` WHERE LOWER(email) = :email LIMIT 1'
 );
 $stmt->execute([':email' => $email]);
 $user = $stmt->fetch();

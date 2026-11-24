@@ -34,22 +34,23 @@ if (
 $title = trim($rawTitle);
 $description = trim($rawDescription);
 
-$categoryStmt = $db->prepare('SELECT id FROM categories WHERE id = :id LIMIT 1');
+$categoryStmt = $db->prepare(
+    'SELECT id_kategori FROM kategori WHERE id_kategori = :id LIMIT 1'
+);
 $categoryStmt->execute([':id' => $categoryId]);
 if (!$categoryStmt->fetch()) {
     jsonResponse(false, 'Kategori tidak ditemukan', null, 400);
 }
 
 $stmt = $db->prepare(
-    'INSERT INTO items (user_id, category_id, title, description, price)
-     VALUES (:user_id, :category_id, :title, :description, :price)'
+    'INSERT INTO produk (id_kategori, nama_produk, harga, stok)
+     VALUES (:category_id, :title, :price, :stock)'
 );
 $stmt->execute([
-    ':user_id' => $user['id'],
     ':category_id' => $categoryId,
     ':title' => $title,
-    ':description' => $description,
     ':price' => (float)$rawPrice,
+    ':stock' => (int)($input['stock'] ?? 0),
 ]);
 
 jsonResponse(

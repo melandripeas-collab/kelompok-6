@@ -36,7 +36,9 @@ class MyApp extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.openAdminDashboard = true});
+
+  final bool openAdminDashboard;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -92,10 +94,16 @@ class _LoginPageState extends State<LoginPage> {
 
     await Session.saveToken(data['token'] as String);
     if (!mounted) return;
-    Navigator.of(context).pushReplacement<void, bool>(
-      MaterialPageRoute<void>(builder: (_) => const admin.AdminDashboardPage()),
-      result: true,
-    );
+    if (widget.openAdminDashboard) {
+      Navigator.of(context).pushReplacement<void, bool>(
+        MaterialPageRoute<void>(
+          builder: (_) => const admin.AdminDashboardPage(),
+        ),
+        result: true,
+      );
+    } else {
+      Navigator.of(context).pop(true);
+    }
   }
 
   Future<void> _openRegister() async {
@@ -171,8 +179,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Silakan masuk untuk membuka dashboard admin',
+                  Text(
+                    widget.openAdminDashboard
+                        ? 'Silakan masuk untuk membuka dashboard admin'
+                        : 'Silakan masuk untuk melanjutkan checkout',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xFF6B7774), fontSize: 13),
                   ),

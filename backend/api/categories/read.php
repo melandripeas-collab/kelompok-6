@@ -7,8 +7,9 @@ setHeaders();
 requireMethod('GET');
 
 $db = (new Database())->connect();
-// Sementara boleh tanpa auth; aktifkan setelah Hari 4:
-// requireAuth($db);
-
-$rows = $db->query('SELECT id, name FROM categories ORDER BY name')->fetchAll();
+$rows = $db->query(
+    'SELECT id_kategori, nama_kategori
+     FROM kategori
+     ORDER BY nama_kategori'
+)->fetchAll();
 jsonResponse(true, 'Data kategori', $rows);

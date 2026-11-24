@@ -17,7 +17,7 @@ class ApiService {
     final token = await Session.getToken();
     return {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token?.trim().isNotEmpty == true) 'Authorization': 'Bearer $token',
     };
   }
 

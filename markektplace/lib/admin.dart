@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'services/marketplace_service.dart';
+
 void main() => runApp(const MyApp());
 
 // Palet Warna Khas FamilyMart
@@ -31,7 +33,16 @@ class MyApp extends StatelessWidget {
 }
 
 class AdminDashboardPage extends StatefulWidget {
-  const AdminDashboardPage({super.key});
+  const AdminDashboardPage({
+    super.key,
+    this.initialCategories,
+    this.initialProducts,
+    this.initialTransactions,
+  });
+
+  final List<Map<String, dynamic>>? initialCategories;
+  final List<Map<String, dynamic>>? initialProducts;
+  final List<Map<String, dynamic>>? initialTransactions;
 
   @override
   State<AdminDashboardPage> createState() => _AdminDashboardPageState();
@@ -39,68 +50,72 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _currentIndex = 0;
+  List<Map<String, dynamic>> _categories = [];
+  List<Map<String, dynamic>> _products = [];
+  List<Map<String, dynamic>> _transactions = [];
+  Map<String, dynamic> _summary = {};
+  bool _isLoading = true;
+  String? _loadError;
 
-  // Data Kategori (Sesuai tabel `kategori`)
-  final List<Map<String, dynamic>> _categories = [
-    {'id_kategori': 1, 'nama_kategori': 'FamiCafé'},
-    {'id_kategori': 2, 'nama_kategori': 'Siap Saji'},
-    {'id_kategori': 3, 'nama_kategori': 'Oden & Snack'},
-    {'id_kategori': 4, 'nama_kategori': 'Minuman'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCategories != null ||
+        widget.initialProducts != null ||
+        widget.initialTransactions != null) {
+      _categories = widget.initialCategories ?? [];
+      _products = widget.initialProducts ?? [];
+      _transactions = widget.initialTransactions ?? [];
+      _isLoading = false;
+    } else {
+      _loadData();
+    }
+  }
 
-  // Data Produk (Sesuai tabel `produk`)[cite: 23]
-  final List<Map<String, dynamic>> _products = [
-    {
-      'id_produk': 1,
-      'nama_produk': 'Kopi Susu Keluarga (KSK)',
-      'kategori': 'FamiCafé',
-      'harga': 18000.00,
-      'stok': 50,
-    },
-    {
-      'id_produk': 2,
-      'nama_produk': 'Onigiri Tuna Mayo',
-      'kategori': 'Siap Saji',
-      'harga': 14000.00,
-      'stok': 30,
-    },
-    {
-      'id_produk': 3,
-      'nama_produk': 'Oden Kuah Tomyum',
-      'kategori': 'Oden & Snack',
-      'harga': 19000.00,
-      'stok': 20,
-    },
-    {
-      'id_produk': 4,
-      'nama_produk': 'Air Mineral 600ml',
-      'kategori': 'Minuman',
-      'harga': 5000.00,
-      'stok': 100,
-    },
-  ];
-
-  // Data Transaksi (Sesuai tabel `transaksi`)[cite: 23]
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      'id_transaksi': 1,
-      'nama_user': 'Sobat FamilyMart',
-      'nama_produk': 'Kopi Susu Keluarga (KSK)',
-      'jumlah': 2,
-      'total_harga': 36000.00,
-      'status': 'pending',
-      'tanggal': '2026-11-12 08:30:00',
-    },
-    {
-      'id_transaksi': 2,
-      'nama_user': 'Budi Santoso',
-      'nama_produk': 'Onigiri Tuna Mayo',
-      'jumlah': 1,
-      'total_harga': 14000.00,
-      'status': 'success',
-      'tanggal': '2026-11-12 09:15:00',
-    },
-  ];
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+    try {
+      final results = await Future.wait([
+        MarketplaceService.getCategories(),
+        MarketplaceService.getProducts(),
+        MarketplaceService.getTransactions(),
+        MarketplaceService.getDashboardSummary(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _categories = results[0] as List<Map<String, dynamic>>;
+        _products = (results[1] as List<Map<String, dynamic>>).map((product) {
+          return {
+            ...product,
+            'harga': num.tryParse(product['harga'].toString()) ?? 0,
+            'kategori':
+                product['nama_kategori']?.toString() ?? 'Tanpa kategori',
+          };
+        }).toList();
+        _transactions = (results[2] as List<Map<String, dynamic>>).map((
+          transaction,
+        ) {
+          return {
+            ...transaction,
+            'total_harga':
+                num.tryParse(transaction['total_harga'].toString()) ?? 0,
+            'tanggal': transaction['tanggal_transaksi']?.toString() ?? '-',
+          };
+        }).toList();
+        _summary = results[3] as Map<String, dynamic>;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = error.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
 
   // Fungsi untuk memunculkan dialog tambah kategori baru
   void _showAddCategoryDialog() {
@@ -127,21 +142,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             child: const Text('Batal', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (categoryController.text.isNotEmpty) {
-                setState(() {
-                  _categories.add({
-                    'id_kategori': _categories.length + 1,
-                    'nama_kategori': categoryController.text,
-                  });
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Kategori berhasil ditambahkan!'),
-                  ),
-                );
-              }
+            onPressed: () async {
+              final name = categoryController.text.trim();
+              if (name.isEmpty) return;
+              final result = await MarketplaceService.createCategory(name);
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(result.message)));
+              if (result.success) await _loadData();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: fmGreen,
@@ -154,6 +163,109 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  Future<void> _showAddProductDialog() async {
+    if (_categories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tambahkan kategori terlebih dahulu')),
+      );
+      return;
+    }
+
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final stockController = TextEditingController(text: '0');
+    final photoController = TextEditingController();
+    int selectedCategory = _categories.first['id_kategori'] as int;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Tambah Produk'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nama produk'),
+                ),
+                DropdownButtonFormField<int>(
+                  initialValue: selectedCategory,
+                  decoration: const InputDecoration(labelText: 'Kategori'),
+                  items: _categories
+                      .map(
+                        (category) => DropdownMenuItem<int>(
+                          value: category['id_kategori'] as int,
+                          child: Text(category['nama_kategori'].toString()),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => selectedCategory = value);
+                    }
+                  },
+                ),
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Harga'),
+                ),
+                TextField(
+                  controller: stockController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Stok'),
+                ),
+                TextField(
+                  controller: photoController,
+                  keyboardType: TextInputType.url,
+                  decoration: const InputDecoration(labelText: 'URL foto'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (saved != true || !mounted) return;
+    final price = num.tryParse(priceController.text);
+    final stock = int.tryParse(stockController.text);
+    if (nameController.text.trim().isEmpty ||
+        price == null ||
+        price <= 0 ||
+        stock == null ||
+        stock < 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Data produk tidak valid')));
+      return;
+    }
+
+    final result = await MarketplaceService.createProduct({
+      'id_kategori': selectedCategory,
+      'nama_produk': nameController.text.trim(),
+      'harga': price,
+      'stok': stock,
+      'foto': photoController.text.trim(),
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(result.message)));
+    if (result.success) await _loadData();
+  }
+
   Future<void> _showEditProductDialog(Map<String, dynamic> product) async {
     final updatedProduct = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -162,10 +274,24 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
 
     if (updatedProduct == null || !mounted) return;
-    setState(() => product.addAll(updatedProduct));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Produk berhasil diperbarui')));
+    final category = _categories.firstWhere(
+      (item) => item['nama_kategori'] == updatedProduct['kategori'],
+      orElse: () => {},
+    );
+    if (category.isEmpty) return;
+
+    final result = await MarketplaceService.updateProduct({
+      'id_produk': product['id_produk'],
+      'id_kategori': category['id_kategori'],
+      'nama_produk': updatedProduct['nama_produk'],
+      'harga': updatedProduct['harga'],
+      'stok': updatedProduct['stok'],
+      'foto': product['foto'],
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(result.message)));
+    if (result.success) await _loadData();
   }
 
   Future<void> _confirmDeleteProduct(Map<String, dynamic> product) async {
@@ -189,17 +315,43 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
 
     if (shouldDelete != true || !mounted) return;
-    setState(() {
-      _products.removeWhere(
-        (item) => item['id_produk'] == product['id_produk'],
-      );
-    });
+    final result = await MarketplaceService.deleteProduct(
+      product['id_produk'] as int,
+    );
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Produk berhasil dihapus')));
+        .showSnackBar(SnackBar(content: Text(result.message)));
+    if (result.success) await _loadData();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_loadError != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Admin FamilyMart')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off, size: 48, color: Colors.red),
+                const SizedBox(height: 12),
+                Text(_loadError!, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: _loadData,
+                  child: const Text('Coba lagi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -328,26 +480,32 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           children: [
             _statCard(
               'Total Produk',
-              '${_products.length}',
+              '${_summary['total_produk'] ?? _products.length}',
               Icons.inventory,
               fmGreen,
               'Tabel produk',
             ),
             _statCard(
               'Kategori',
-              '${_categories.length}',
+              '${_summary['total_kategori'] ?? _categories.length}',
               Icons.category,
               fmBlue,
               'Tabel kategori',
             ),
             _statCard(
               'Transaksi',
-              '${_transactions.length}',
+              '${_summary['total_transaksi'] ?? _transactions.length}',
               Icons.shopping_cart,
               Colors.orange,
               'Tabel transaksi',
             ),
-            _statCard('User', '1', Icons.people, Colors.purple, 'Tabel user'),
+            _statCard(
+              'User',
+              '${_summary['total_user'] ?? 0}',
+              Icons.people,
+              Colors.purple,
+              'Tabel user',
+            ),
           ],
         ),
       ],
@@ -442,13 +600,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                             ),
                           ),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Form tambah produk baru'),
-                                ),
-                              );
-                            },
+                            onPressed: _showAddProductDialog,
                             icon: const Icon(Icons.add, size: 16),
                             label: const Text('Tambah'),
                             style: ElevatedButton.styleFrom(
@@ -726,12 +878,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                             ),
                           ),
                           OutlinedButton(
-                            onPressed: () {
-                              setState(() {
-                                t['status'] = t['status'] == 'pending'
-                                    ? 'success'
-                                    : 'pending';
-                              });
+                            onPressed: () async {
+                              final nextStatus = t['status'] == 'pending'
+                                  ? 'success'
+                                  : 'pending';
+                              final messenger = ScaffoldMessenger.of(context);
+                              final result =
+                                  await MarketplaceService.updateTransactionStatus(
+                                    t['id_transaksi'] as int,
+                                    nextStatus,
+                                  );
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(result.message)),
+                              );
+                              if (result.success) await _loadData();
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: t['status'] == 'success'

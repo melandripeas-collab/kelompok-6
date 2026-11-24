@@ -1,9 +1,17 @@
-requireMethod('POST');
-$in = getJsonInput();
-$id = (int)($in['id'] ?? 0);
+<?php
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../helpers/response.php';
+require_once __DIR__ . '/../../helpers/auth.php';
 
-$stmt = $db->prepare("DELETE FROM items WHERE id = :id AND user_id = :uid");
-$stmt->execute([':id' => $id, ':uid' => $user['id']]);
+setHeaders();
+requireMethod('POST');
+
+$db = (new Database())->connect();
+requireAuth($db);
+$id = (int)(getJsonInput()['id'] ?? 0);
+
+$stmt = $db->prepare('DELETE FROM produk WHERE id_produk = :id');
+$stmt->execute([':id' => $id]);
 
 if ($stmt->rowCount() === 0) {
     jsonResponse(false, 'Data tidak ditemukan', null, 404);
