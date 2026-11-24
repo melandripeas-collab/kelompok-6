@@ -1,3 +1,5 @@
+import 'package:image_picker/image_picker.dart';
+
 import 'api_service.dart';
 
 class MarketplaceService {
@@ -36,11 +38,23 @@ class MarketplaceService {
   static Future<ApiResult> createCategory(String name) =>
       ApiService.post('/categories/create.php', {'nama_kategori': name});
 
-  static Future<ApiResult> createProduct(Map<String, dynamic> product) =>
-      ApiService.post('/products/create.php', product);
+  static Future<ApiResult> createProduct(
+    Map<String, dynamic> product, {
+    XFile? image,
+  }) => ApiService.postMultipart(
+    '/products/create.php',
+    product.map((key, value) => MapEntry(key, value.toString())),
+    image: image,
+  );
 
-  static Future<ApiResult> updateProduct(Map<String, dynamic> product) =>
-      ApiService.post('/products/update.php', product);
+  static Future<ApiResult> updateProduct(
+    Map<String, dynamic> product, {
+    XFile? image,
+  }) => ApiService.postMultipart(
+    '/products/update.php',
+    product.map((key, value) => MapEntry(key, value.toString())),
+    image: image,
+  );
 
   static Future<ApiResult> deleteProduct(int id) =>
       ApiService.post('/products/delete.php', {'id_produk': id});

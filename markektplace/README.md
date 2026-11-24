@@ -29,7 +29,9 @@ Untuk konfigurasi database pertama kali, impor struktur dari
 `db_marketplace (1).sql`, lalu jalankan
 `backend/database/002_sync_marketplace_data.sql`. Akun yang didaftarkan dari
 halaman login disimpan ke tabel `user`; produk, kategori, dan transaksi
-disimpan ke tabel masing-masing. Pengelolaan produk/kategori memerlukan login.
+disimpan ke tabel masing-masing. Foto produk dipilih dari perangkat (JPG, PNG,
+atau WEBP, maksimal 5 MB), disimpan di `backend/uploads/products`, dan path-nya
+disimpan pada tabel `produk`. Pengelolaan produk/kategori memerlukan login.
 
 ### Alamat API kustom
 

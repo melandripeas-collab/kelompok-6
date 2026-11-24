@@ -10,9 +10,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:markektplace/admin.dart' as admin;
+import 'package:markektplace/config/api_config.dart';
 import 'package:markektplace/main.dart';
 
 void main() {
+  test('uploaded product images resolve through the API endpoint', () {
+    final imageUri = Uri.parse(
+      ApiConfig.resolveAssetUrl(
+        'uploads/products/0123456789abcdef0123456789abcdef.png',
+      ),
+    );
+
+    expect(imageUri.path, '/kelompok-6/backend/api/products/image.php');
+    expect(
+      imageUri.queryParameters['name'],
+      '0123456789abcdef0123456789abcdef.png',
+    );
+  });
+
   testWidgets('app opens the customer storefront', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MyApp(
@@ -90,9 +105,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.add_rounded));
     await tester.tap(find.text('Keranjang'));
     await tester.pumpAndSettle();
-    ScaffoldMessenger.of(
-      tester.element(find.text('Checkout Transaksi')),
-    ).hideCurrentSnackBar();
+    ScaffoldMessenger.of(tester.element(find.text('Checkout Transaksi')))
+        .hideCurrentSnackBar();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Checkout Transaksi'));
     await tester.pumpAndSettle();
@@ -132,5 +146,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Kopi Susu Baru'), findsOneWidget);
+
+    await tester.tap(find.text('Tambah'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pilih foto dari file'), findsOneWidget);
   });
 }

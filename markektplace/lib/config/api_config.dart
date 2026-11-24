@@ -37,4 +37,22 @@ class ApiConfig {
         : path;
     return '$protocol://$host:$_configuredPort$normalizedPath';
   }
+
+  static String resolveAssetUrl(String path) {
+    final uri = Uri.tryParse(path);
+    if (uri != null && uri.hasScheme) return path;
+
+    const uploadPrefix = 'uploads/products/';
+    if (path.startsWith(uploadPrefix)) {
+      final imageUri = Uri.parse('$baseUrl/').resolve('products/image.php');
+      return imageUri
+          .replace(
+            queryParameters: {'name': path.substring(uploadPrefix.length)},
+          )
+          .toString();
+    }
+
+    final relativePath = path.startsWith('/') ? path.substring(1) : path;
+    return Uri.parse(baseUrl).resolve(relativePath).toString();
+  }
 }

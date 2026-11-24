@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 import '../config/api_config.dart';
 import 'session.dart';
@@ -60,6 +61,41 @@ class ApiService {
       return _parse(r);
     } catch (e) {
       return ApiResult(false, 'Tidak dapat terhubung ke server', null);
+    }
+  }
+
+  static Future<ApiResult> postMultipart(
+    String path,
+    Map<String, String> fields, {
+    XFile? image,
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConfig.baseUrl}$path'),
+      )..fields.addAll(fields);
+
+      final token = (await Session.getToken())?.trim();
+      if (token?.isNotEmpty == true) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      if (image != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'foto',
+            await image.readAsBytes(),
+            filename: image.name,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
+      final response = await http.Response.fromStream(streamedResponse);
+      return _parse(response);
+    } catch (error) {
+      return ApiResult(false, 'Gagal mengunggah foto: $error', null);
     }
   }
 }

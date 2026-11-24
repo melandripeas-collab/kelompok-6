@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'services/marketplace_service.dart';
 
@@ -174,8 +176,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
     final stockController = TextEditingController(text: '0');
-    final photoController = TextEditingController();
+    XFile? selectedPhoto;
     int selectedCategory = _categories.first['id_kategori'] as int;
+    final messenger = ScaffoldMessenger.of(context);
 
     final saved = await showDialog<bool>(
       context: context,
@@ -217,10 +220,26 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'Stok'),
                 ),
-                TextField(
-                  controller: photoController,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(labelText: 'URL foto'),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    try {
+                      final photo = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 85,
+                      );
+                      if (photo != null) {
+                        setDialogState(() => selectedPhoto = photo);
+                      }
+                    } on PlatformException catch (error) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text('Gagal memilih foto: ${error.message}'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.image_outlined),
+                  label: Text(selectedPhoto?.name ?? 'Pilih foto dari file'),
                 ),
               ],
             ),
@@ -258,8 +277,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       'nama_produk': nameController.text.trim(),
       'harga': price,
       'stok': stock,
-      'foto': photoController.text.trim(),
-    });
+    }, image: selectedPhoto);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(result.message)));
@@ -286,8 +304,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       'nama_produk': updatedProduct['nama_produk'],
       'harga': updatedProduct['harga'],
       'stok': updatedProduct['stok'],
-      'foto': product['foto'],
-    });
+      'foto': updatedProduct['foto'],
+    }, image: updatedProduct['image'] as XFile?);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(result.message)));
@@ -943,6 +961,7 @@ class _EditProductDialogState extends State<_EditProductDialog> {
   late final TextEditingController _priceController;
   late final TextEditingController _stockController;
   late String _selectedCategory;
+  XFile? _selectedImage;
 
   @override
   void initState() {
@@ -975,6 +994,8 @@ class _EditProductDialogState extends State<_EditProductDialog> {
       'kategori': _selectedCategory,
       'harga': num.parse(_priceController.text),
       'stok': int.parse(_stockController.text),
+      'foto': widget.product['foto'] ?? '',
+      'image': _selectedImage,
     });
   }
 
@@ -1035,6 +1056,30 @@ class _EditProductDialogState extends State<_EditProductDialog> {
                     ? 'Masukkan stok yang valid'
                     : null;
               },
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  final photo = await ImagePicker().pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 85,
+                  );
+                  if (photo != null && mounted) {
+                    setState(() => _selectedImage = photo);
+                  }
+                } on PlatformException catch (error) {
+                  if (!mounted) return;
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal memilih foto: ${error.message}'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.image_outlined),
+              label: Text(_selectedImage?.name ?? 'Pilih foto baru'),
             ),
           ],
         ),

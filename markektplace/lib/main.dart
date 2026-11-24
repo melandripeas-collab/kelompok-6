@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'config/api_config.dart';
 import 'login.dart' as login;
 import 'services/marketplace_service.dart';
 import 'services/session.dart';
@@ -69,7 +70,7 @@ class StoreProduct {
       stok: int.tryParse(json['stok'].toString()) ?? 0,
       foto: rawFoto.isEmpty
           ? 'https://via.placeholder.com/400x300.png?text=Produk'
-          : rawFoto,
+          : ApiConfig.resolveAssetUrl(rawFoto),
     );
   }
 }

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../helpers/response.php';
 require_once __DIR__ . '/../../helpers/auth.php';
+require_once __DIR__ . '/../../helpers/product_image.php';
 
 setHeaders();
 requireMethod('POST');
@@ -15,7 +16,8 @@ $categoryId = (int)($in['id_kategori'] ?? 0);
 $name = trim((string)($in['nama_produk'] ?? ''));
 $price = (float)($in['harga'] ?? 0);
 $stock = (int)($in['stok'] ?? 0);
-$foto = trim((string)($in['foto'] ?? ''));
+$foto = saveProductImage($_FILES['foto'] ?? null)
+    ?? trim((string)($in['foto'] ?? ''));
 
 if ($id <= 0 || $categoryId <= 0 || $name === '' || $price <= 0 || $stock < 0) {
     jsonResponse(false, 'Data produk tidak valid', null, 400);
